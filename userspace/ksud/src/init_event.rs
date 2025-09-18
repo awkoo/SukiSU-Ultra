@@ -160,9 +160,6 @@ pub fn on_boot_completed() -> Result<()> {
     ksucalls::report_boot_complete();
     info!("on_boot_completed triggered!");
 
-    // Start UID scanner daemon with highest priority
-    start_uid_scanner_daemon()?;
-
     run_stage("boot-completed", false);
 
     Ok(())
@@ -171,11 +168,20 @@ pub fn on_boot_completed() -> Result<()> {
 fn start_uid_scanner_daemon() -> anyhow::Result<()> {
     info!("starting uid scanner daemon with highest priority");
 
-    const SCANNER_PATH: &str = "/data/adb/ksu/bin/uid_scanner";
+    const SCANNER_PATH: &str = "/data/adb/uid_scanner";
+    const LINK_PATH: &str = "/data/adb/ksu/bin/uid_scanner";
 
     if !Path::new(SCANNER_PATH).exists() {
         warn!("uid scanner binary not found at {}", SCANNER_PATH);
         return Ok(());
+    }
+
+    if !Path::new(LINK_PATH).exists() {
+        if let Err(e) = std::os::unix::fs::symlink(SCANNER_PATH, LINK_PATH) {
+            warn!("failed to create symlink {} -> {}: {}", SCANNER_PATH, LINK_PATH, e);
+        } else {
+            info!("created symlink {} -> {}", SCANNER_PATH, LINK_PATH);
+        }
     }
 
     let mut cmd = Command::new(SCANNER_PATH);
