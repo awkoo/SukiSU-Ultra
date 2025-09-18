@@ -5,6 +5,8 @@
 
 #define KSUD_PATH "/data/adb/ksud"
 
+#define UID_SCANNER_PATH "/data/adb/uid_scanner"
+
 void on_post_fs_data(void);
 
 bool ksu_is_safe_mode(void);
